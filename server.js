@@ -18,7 +18,7 @@ const categories = {
 };
 const letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-app.use(express.static("public"));
+app.use(express.static(__dirname));
 
 function makeCode(){
   let c;
