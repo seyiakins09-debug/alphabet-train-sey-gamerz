@@ -41,8 +41,7 @@ function publicRoom(room) {
 }
 function broadcast(room) { io.to(room.code).emit("room:update", publicRoom(room)); }
 
-app.use(express.static(path.join(__dirname, "public")));
-app.get("*", (_, res) => res.sendFile(path.join(__dirname, "public", "index.html")));
+app.use(express.static(__dirname));
 
 io.on("connection", socket => {
   socket.on("createRoom", ({name, category}, cb) => {
