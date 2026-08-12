@@ -6,6 +6,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { pingInterval: 25000, pingTimeout: 60000 });
 
+const path = require("path");
+app.use(express.static(__dirname));
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
 const rooms = new Map();
 const ROOM_LIFETIME = 60 * 60 * 1000; // 1 hour
 
@@ -350,6 +357,6 @@ app.get("/health", (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
+server.listen(PORT, "0.0.0.0", () => {
   console.log(`ALPHABET TRAIN V4 running on port ${PORT}`);
 });
