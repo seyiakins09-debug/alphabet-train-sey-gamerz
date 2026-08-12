@@ -31,7 +31,7 @@ button{border:0;background:#00d4ff;font-weight:900;cursor:pointer}
 .hostpanel{border:1px solid #ffd166;border-radius:18px;padding:15px;margin-top:15px}
 .hostlabel{text-align:center;color:#ffd166;font-weight:1000;margin-bottom:10px}
 .submission{background:#081626;border:1px solid #2b4566;border-radius:14px;padding:12px;margin:8px 0}
-.submission .answer{font-size:20px;font-weight:900}.submission small{color:#9fb0c8}
+.submission .answer{font-size:20px;font-weight:900}.award{background:#35e49b;color:#07110b;margin-top:10px}.disabledAward{opacity:.45;pointer-events:none}.submission small{color:#9fb0c8}
 .hide{display:none!important}
 .badge{display:inline-block;padding:5px 9px;border-radius:99px;background:#263b58;margin:3px;font-size:12px}
 @media(max-width:650px){.grid{grid-template-columns:1fr}.card{padding:16px}}
@@ -93,9 +93,10 @@ button{border:0;background:#00d4ff;font-weight:900;cursor:pointer}
 
 <div id="hostPanel" class="hostpanel hide">
 <div class="hostlabel">👑 HOST CONTROL PANEL</div>
-<p class="sub">Answers are checked automatically. The <b>first valid answer</b> wins the round and gets +1 point.</p>
-<div class="note">🤖 AUTO-DETECT ON — valid answers are checked by the game server.</div><div id="submissions"></div>
+<p class="sub">Review the answers below and manually select the player with the correct answer.</p>
+<div class="note">👑 HOST DECIDES — Tap <b>AWARD 5 POINTS</b> beside the correct answer.</div><div id="submissions"></div>
 <div class="form">
+<button id="noWinnerBtn" class="dark hide" onclick="noWinner()">NO WINNER / SKIP ROUND</button>
 <button id="nextBtn" class="gold hide" onclick="next()">NEXT ROUND ➜</button>
 <button class="red" onclick="endGame()">END GAME</button>
 </div>
@@ -173,7 +174,21 @@ function submitAnswer(){
   });
 }
 
-function next(){socket.emit("host:next");}
+function award(submissionId){
+  socket.emit("host:award",{submissionId},r=>{
+    if(!r.ok)setMsg("gameMsg",r.error||"Could not award points.","bad");
+  });
+}
+function noWinner(){
+  socket.emit("host:noWinner",r=>{
+    if(!r.ok)setMsg("gameMsg",r.error||"Could not finish the round.","bad");
+  });
+}
+function next(){
+  socket.emit("host:next",r=>{
+    if(r && r.ok===false)setMsg("gameMsg",r.error||"Could not start next round.","bad");
+  });
+}
 function endGame(){socket.emit("host:end");}
 
 function escapeHtml(x){
@@ -213,16 +228,19 @@ function render(room){
     .map(p=>`<div class="player">👤 ${escapeHtml(p.name)} <b>${p.score}</b></div>`).join("");
 
   $("nextBtn").classList.toggle("hide",!(isHost&&room.state==="result"));
+  $("noWinnerBtn").classList.toggle("hide",!(isHost&&room.state==="playing"));
 
   if(isHost){
     $("submissions").innerHTML=room.submissions.length
-      ? room.submissions.map((s,i)=>`
+      ? room.submissions.map(s=>`
         <div class="submission">
           <div><span class="badge">#${s.order}</span> <b>${escapeHtml(s.playerName)}</b></div>
           <div class="answer">${escapeHtml(s.answer)}</div>
-          <small>✅ Automatically validated • ${i===0?"First valid answer":"Valid answer"}</small>
+          ${room.state==="playing"
+            ? `<button class="award" onclick="award('${s.id}')">AWARD 5 POINTS 🏆</button>`
+            : `<small>Round finished</small>`}
         </div>`).join("")
-      : "<div class='note'>Waiting for answers... The first valid answer wins automatically.</div>";
+      : "<div class='note'>Waiting for player answers...</div>";
   }
 }
 
@@ -235,9 +253,9 @@ socket.on("submission",s=>{
 
 socket.on("roundResult",r=>{
   if(r.winner){
-    setMsg("gameMsg",`🎯 ${r.winner} wins with "${r.answer}"! +1 point.`,"good");
+    setMsg("gameMsg",`🎯 ${r.winner} selected! "${r.answer}" — +5 POINTS 🏆`,"good");
   }else{
-    setMsg("gameMsg","⏰ Time is up. No winner.","bad");
+    setMsg("gameMsg",r.message || "⏰ Time is up. No winner selected.","bad");
   }
 });
 

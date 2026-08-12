@@ -18,3 +18,7 @@ Place, Animal, Food, Name, Job, Thing, Brand, Sport, Country, City,
 Fruit, Vegetable, Drink, Vehicle, Clothing, Body Part, School Subject,
 Technology, Movie, Song, Celebrity, Game, Company, App, Color,
 Instrument, Profession, Household Item, Nature, Superhero.
+
+
+MANUAL SCORING MODE
+Players submit answers. The host manually selects the correct player's submission. The selected player automatically receives 5 points. No automatic answer validation or winner selection is used.

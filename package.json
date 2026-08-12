@@ -1,6 +1,6 @@
 {
-  "name": "alphabet-train-sey-gamerz-v4",
-  "version": "4.0.0",
+  "name": "alphabet-train-sey-gamerz-manual",
+  "version": "4.1.0",
   "private": true,
   "scripts": {
     "start": "node server.js"

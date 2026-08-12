@@ -249,6 +249,7 @@ io.on("connection", socket => {
   });
 
   // PLAYER submits an answer. Host decides if it is correct.
+  // PLAYER submits an answer. The HOST manually decides which submission is correct.
   socket.on("player:submit", ({ answer }, done) => {
     const room = rooms.get(socket.data.room);
 
@@ -266,24 +267,9 @@ io.on("connection", socket => {
     const cleanAnswer = String(answer || "").trim().slice(0, 60);
     if (!cleanAnswer) return done?.({ ok: false, error: "Enter an answer." });
 
-    const normalized = normalizeAnswer(cleanAnswer);
-    const requiredLetter = room.letter.toLowerCase();
-    const validWords = acceptedAnswers(room.category);
-    const startsCorrectly = normalized.startsWith(requiredLetter);
-    const categoryCorrect = validWords.has(normalized);
-
-    // Every submission is checked automatically. Only an answer in the category
-    // answer bank and beginning with the round letter can win.
-    if (!startsCorrectly) {
-      return done?.({ ok: false, error: `Your answer must start with ${room.letter}.` });
-    }
-    if (!categoryCorrect) {
-      return done?.({ ok: false, error: `That answer is not recognized for ${room.category}. Try another one.` });
-    }
-
-    // The first valid answer wins automatically.
-    if (room.state !== "playing") {
-      return done?.({ ok: false, error: "This round already has a winner." });
+    // One submission per player per round.
+    if (room.submissions.some(s => s.playerId === socket.id)) {
+      return done?.({ ok: false, error: "You have already submitted an answer for this round." });
     }
 
     room.submissionCounter += 1;
@@ -292,30 +278,86 @@ io.on("connection", socket => {
       playerId: socket.id,
       playerName: player.name,
       answer: cleanAnswer,
-      order: room.submissionCounter,
-      valid: true
+      order: room.submissionCounter
     };
 
     room.submissions.push(submission);
 
+    // No automatic answer checking or automatic winner selection.
+    // The host sees every submission and manually awards the 5 points.
+    io.to(room.code).emit("submission", submission);
+    broadcast(room);
+
+    done?.({ ok: true, order: submission.order });
+  });
+
+  // HOST manually selects the player whose answer is correct.
+  // The selected player receives exactly 5 points.
+  socket.on("host:award", ({ submissionId }, done) => {
+    const room = rooms.get(socket.data.room);
+
+    if (!room || room.hostSocket !== socket.id) {
+      return done?.({ ok: false, error: "Host permission required." });
+    }
+
+    if (room.state !== "playing") {
+      return done?.({ ok: false, error: "This round is no longer active." });
+    }
+
+    const submission = room.submissions.find(s => s.id === submissionId);
+    if (!submission) {
+      return done?.({ ok: false, error: "Submission not found." });
+    }
+
+    const player = room.players.get(submission.playerId);
+    if (!player) {
+      return done?.({ ok: false, error: "That player is no longer in the room." });
+    }
+
     stopTimer(room);
     room.state = "result";
-    player.score += 1;
+    player.score += 5;
 
-    io.to(room.code).emit("submission", submission);
     io.to(room.code).emit("roundResult", {
       winner: player.name,
-      answer: cleanAnswer,
+      answer: submission.answer,
       score: player.score,
+      pointsAwarded: 5,
       order: submission.order,
-      automatic: true
+      manual: true
     });
 
     broadcast(room);
-    done?.({ ok: true, order: submission.order, winner: true });
+    done?.({ ok: true });
   });
 
-  // Winner detection is automatic. The host no longer needs to mark answers.
+  // HOST can finish the round with no winner if nobody is correct.
+  socket.on("host:noWinner", done => {
+    const room = rooms.get(socket.data.room);
+
+    if (!room || room.hostSocket !== socket.id) {
+      return done?.({ ok: false, error: "Host permission required." });
+    }
+
+    if (room.state !== "playing") {
+      return done?.({ ok: false, error: "This round is no longer active." });
+    }
+
+    stopTimer(room);
+    room.state = "result";
+
+    io.to(room.code).emit("roundResult", {
+      winner: null,
+      answer: null,
+      pointsAwarded: 0,
+      manual: true,
+      message: "No winner selected."
+    });
+
+    broadcast(room);
+    done?.({ ok: true });
+  });
+
   socket.on("host:next", done => {
     const room = rooms.get(socket.data.room);
 
