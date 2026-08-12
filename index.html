@@ -1,0 +1,70 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ALPHABET TRAIN — SEY GAMERZ</title>
+<script src="/socket.io/socket.io.js"></script>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui;background:#07111f;color:#fff;min-height:100vh}
+main{width:min(900px,100%);margin:auto;padding:16px}.card{background:#102039;border:1px solid #29405f;border-radius:22px;padding:22px;box-shadow:0 15px 45px #0006}
+h1{text-align:center;font-size:clamp(32px,8vw,58px);margin:5px}.sub{text-align:center;color:#a9b8ca}
+.screen{display:none}.active{display:block}.form{display:grid;gap:11px;max-width:520px;margin:25px auto}
+input,select,button{width:100%;padding:14px;border-radius:13px;font:inherit}input,select{background:#071525;color:#fff;border:1px solid #29405f}button{border:0;background:#00d4ff;font-weight:900;cursor:pointer}
+.secondary{background:#263b58;color:#fff}.gold{background:#ffd166;color:#17100a}
+.room{text-align:center;font-size:28px;font-weight:900;letter-spacing:2px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stat{text-align:center;background:#081526;border-radius:15px;padding:13px}.stat b{display:block;font-size:26px}
+.letter{width:130px;height:130px;border-radius:50%;border:5px solid #00d4ff;display:grid;place-items:center;margin:20px auto;font-size:70px;font-weight:1000}
+.cat{text-align:center;color:#ffd166;font-size:20px;font-weight:900}.timer{text-align:center;font-size:38px;font-weight:1000}
+.players{margin-top:18px}.player{display:flex;justify-content:space-between;padding:12px;border-bottom:1px solid #29405f}
+.msg{text-align:center;min-height:28px;font-weight:800;margin:12px}.good{color:#37e39a}.bad{color:#ff607d}
+@media(max-width:600px){.grid{grid-template-columns:1fr}.card{padding:16px}}
+</style></head>
+<body><main>
+<div id="home" class="screen active card">
+<div style="text-align:center;font-size:55px">🚂🔤🎯</div>
+<h1>ALPHABET TRAIN</h1><p class="sub">SEY GAMERZ Multiplayer</p>
+<div class="form">
+<input id="name" placeholder="Your player name" maxlength="25">
+<select id="category"><option>Place</option><option>Animal</option><option>Food</option><option>Name</option><option>Job</option><option>Thing</option><option>Brand</option></select>
+<button onclick="create()">CREATE ROOM 🎯</button>
+<input id="roomCode" placeholder="Enter room code">
+<button class="secondary" onclick="join()">JOIN ROOM 🚀</button>
+</div><div id="homeMsg" class="msg"></div>
+</div>
+
+<div id="lobby" class="screen card">
+<h2 style="text-align:center">🎮 GAME LOBBY</h2>
+<div class="room" id="code">SG0000</div><p class="sub">Share this code with your players.</p>
+<div class="players" id="players"></div>
+<div id="hostControls"><button class="gold" onclick="start()">START GAME 🎯</button></div>
+<div id="lobbyMsg" class="msg"></div>
+</div>
+
+<div id="game" class="screen card">
+<div class="grid"><div class="stat">ROUND<b id="round">1</b></div><div class="stat">TIME<b id="time">45</b></div></div>
+<div class="letter" id="letter">A</div><div class="cat" id="cat">PLACE</div>
+<p class="sub" style="text-align:center">Find a word starting with the letter above.</p>
+<div class="form" style="margin-top:15px"><input id="answer" placeholder="Type your answer"><button onclick="submitAnswer()">SUBMIT 🎯</button></div>
+<div id="gameMsg" class="msg"></div>
+<div class="players" id="board"></div>
+<div id="next"></div>
+</div>
+</main>
+<script>
+const socket=io();let room=null,isHost=false;
+const $=x=>document.getElementById(x);
+function show(x){document.querySelectorAll(".screen").forEach(e=>e.classList.remove("active"));$(x).classList.add("active")}
+function create(){socket.emit("createRoom",{name:$("name").value,category:$("category").value},res=>{if(!res.ok)return msg("homeMsg",res.error,"bad");room=res.room;isHost=true;show("lobby");render(room)})}
+function join(){socket.emit("joinRoom",{name:$("name").value,roomCode:$("roomCode").value},res=>{if(!res.ok)return msg("homeMsg",res.error,"bad");room=res.room;isHost=false;show("lobby");render(room)})}
+function start(){socket.emit("startGame")}
+function render(r){room=r;$("code").textContent=r.code;$("players").innerHTML=r.players.map(p=>`<div class="player">👤 ${esc(p.name)} <b>${p.score}</b></div>`).join("");$("hostControls").style.display=isHost?"block":"none";if(r.state==="playing"||r.state==="result"){show("game");$("round").textContent=r.round;$("letter").textContent=r.letter;$("cat").textContent=r.category.toUpperCase();$("time").textContent=r.timeLeft;$("board").innerHTML=r.players.map(p=>`<div class="player">👤 ${esc(p.name)} <b>${p.score}</b></div>`).join("");if(r.state==="playing")$("answer").disabled=false;else $("answer").disabled=true}}
+function submitAnswer(){socket.emit("submitAnswer",{answer:$("answer").value},res=>{if(!res.ok&&res.error)msg("gameMsg",res.error,"bad")})}
+function msg(id,t,c){$(id).textContent=t;$(id).className="msg "+c}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]))}
+socket.on("room:update",render);
+socket.on("timer",t=>{$("time").textContent=t});
+socket.on("winner",w=>{if(w.name)msg("gameMsg",`🎯 ${w.name} wins with ${w.answer}! +1 POINT`,"good");else msg("gameMsg","⏰ Time's up!","bad");if(isHost)$("next").innerHTML='<button class="gold" onclick="nextRound()">NEXT ROUND ➜</button>'});
+function nextRound(){$("next").innerHTML="";$("answer").value="";socket.emit("nextRound")}
+socket.on("closed",()=>{alert("The host closed the room.");location.reload()});
+$("answer").addEventListener("keydown",e=>{if(e.key==="Enter")submitAnswer()});
+</script></body></html>
