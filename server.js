@@ -24,6 +24,40 @@ const CATEGORIES = [
   "Instrument", "Profession", "Household Item", "Nature", "Superhero"
 ];
 
+
+const ANSWERS = {
+  "Place": ["Abuja","Accra","Athens","Berlin","Cairo","Calabar","Dubai","Enugu","Ibadan","Jos","Kano","Lagos","London","Madrid","Nairobi","Oslo","Paris","Quito","Rome","Sokoto","Tokyo","Uyo","Vienna","Wuse","Yola","Zaria"],
+  "Animal": ["Ant","Antelope","Bear","Cat","Cow","Dog","Dolphin","Eagle","Elephant","Fox","Giraffe","Goat","Horse","Iguana","Jaguar","Kangaroo","Lion","Monkey","Octopus","Parrot","Rabbit","Snake","Tiger","Urchin","Vulture","Wolf","Yak","Zebra"],
+  "Food": ["Apple pie","Beans","Bread","Burger","Cake","Chips","Doughnut","Egusi soup","Fried rice","Garri","Hamburger","Ice cream","Jollof rice","Kebab","Lasagna","Meat pie","Noodles","Okra soup","Pizza","Rice","Salad","Toast","Ugali","Yam","Zobo"],
+  "Name": ["Ada","Aisha","Ben","Bola","Chinedu","David","Emeka","Faith","Grace","Hassan","Ibrahim","Jane","Kelechi","Lilian","Michael","Ngozi","Ola","Peter","Queen","Ruth","Samuel","Tunde","Uche","Victor","Wale","Yusuf","Zainab"],
+  "Job": ["Accountant","Baker","Carpenter","Doctor","Engineer","Farmer","Guard","Hairdresser","Inspector","Journalist","Kindergarten teacher","Lawyer","Mechanic","Nurse","Officer","Pilot","Receptionist","Salesperson","Teacher","Usher","Veterinarian","Waiter","X-ray technician","YouTuber"],
+  "Thing": ["Apple","Bag","Chair","Door","Envelope","Fan","Glass","Hammer","Iron","Jug","Key","Lamp","Mirror","Notebook","Orange","Pencil","Quilt","Radio","Spoon","Table","Umbrella","Vase","Watch","Xylophone","Yo-yo","Zipper"],
+  "Brand": ["Adidas","Amazon","Apple","BMW","Canon","Dell","Emirates","Ford","Google","Honda","Intel","Jumia","Kia","Lego","MTN","Nike","Oppo","Pepsi","Rolex","Samsung","Toyota","Uber","Visa","Xiaomi","Yamaha","Zara"],
+  "Sport": ["Archery","Baseball","Cricket","Darts","Equestrian","Football","Golf","Hockey","Ice hockey","Judo","Karate","Lacrosse","Motocross","Netball","Olympics","Polo","Quidditch","Rugby","Soccer","Tennis","UFC","Volleyball","Wrestling"],
+  "Country": ["Argentina","Brazil","Canada","Denmark","Egypt","France","Ghana","Hungary","India","Jamaica","Kenya","Laos","Mexico","Nigeria","Oman","Portugal","Qatar","Rwanda","Spain","Turkey","Uganda","Vietnam","Yemen","Zambia","Zimbabwe"],
+  "City": ["Abuja","Accra","Amsterdam","Berlin","Cairo","Dublin","Enugu","Florence","Geneva","Havana","Ibadan","Jakarta","Kano","Lagos","Madrid","Nairobi","Oslo","Paris","Quebec","Rome","Seoul","Tokyo","Uyo","Vienna","Yola","Zaria"],
+  "Fruit": ["Apple","Banana","Cherry","Date","Elderberry","Fig","Grape","Guava","Honeydew","Kiwi","Lemon","Mango","Nectarine","Orange","Papaya","Quince","Raspberry","Strawberry","Tangerine","Watermelon"],
+  "Vegetable": ["Artichoke","Beetroot","Carrot","Daikon","Eggplant","Fennel","Garlic","Horseradish","Iceberg lettuce","Jalapeno","Kale","Leek","Mushroom","Onion","Pea","Radish","Spinach","Tomato","Turnip","Yam","Zucchini"],
+  "Drink": ["Apple juice","Beer","Coffee","Drinkable yogurt","Espresso","Fanta","Gin","Hot chocolate","Iced tea","Juice","Kola drink","Lemonade","Milk","Nescafe","Orange juice","Pepsi","Qahwa","Root beer","Smoothie","Tea","Umu tea","Vodka","Water","Zobo"],
+  "Vehicle": ["Ambulance","Bus","Car","Dump truck","Excavator","Ferry","Golf cart","Helicopter","Ice cream van","Jeep","Kayak","Lorry","Motorcycle","Nissan","Omnibus","Plane","Quad bike","Racing car","Scooter","Train","Uber car","Van","Wagon","Yacht","Zamboni"],
+  "Clothing": ["Anorak","Blazer","Cap","Dress","Espadrille","Frock","Gloves","Hat","Jacket","Kimono","Leggings","Miniskirt","Necktie","Overalls","Pants","Quilted jacket","Robe","Shirt","Trousers","Uniform","Vest","Waistcoat","Yukata"],
+  "Body Part": ["Ankle","Arm","Back","Chest","Ear","Elbow","Finger","Gum","Hand","Iris","Jaw","Knee","Leg","Mouth","Neck","Nose","Palm","Rib","Shoulder","Thigh","Ulna","Vein","Wrist"],
+  "School Subject": ["Art","Biology","Chemistry","Drama","Economics","French","Geography","History","ICT","Journalism","Knowledge studies","Literature","Mathematics","Physics","Religion","Science","Technology","Yoruba"],
+  "Technology": ["Android","Bluetooth","Computer","Database","Ethernet","Firewall","Google","HTML","Internet","Java","Keyboard","Linux","Monitor","Network","Oracle","Python","Router","Server","Tablet","USB","VPN","Wi-Fi","Xiaomi","YouTube","Zoom"],
+  "Movie": ["Avatar","Barbie","Cars","Dune","Encanto","Frozen","Gladiator","Hercules","Inception","Joker","King Kong","Lion King","Matrix","Nope","Oppenheimer","Parasite","Queen of Katwe","Rocky","Titanic","Up","Venom","Wonder Woman","X-Men","Yes Day","Zootopia"],
+  "Song": ["Africa","Bad Guy","Calm Down","Despacito","Easy On Me","Firework","Halo","Imagine","Jolene","Killing Me Softly","Love Story","Perfect","Queen of Hearts","Rolling in the Deep","Shape of You","Thriller","Umbrella","Viva La Vida","Watermelon Sugar","Yellow","Zombie"],
+  "Celebrity": ["Adele","Beyonce","Chris Evans","Drake","Eminem","Femi Kuti","Gordon Ramsay","Halle Berry","Idris Elba","Jackie Chan","Kanye West","Lionel Messi","Michael Jackson","Nicki Minaj","Oprah","Rihanna","Shakira","Taylor Swift","Usain Bolt","Wizkid","Yemi Alade","Zlatan"],
+  "Game": ["Among Us","Bingo","Chess","Dominoes","Elden Ring","Fortnite","GTA","Halo","Injustice","Jenga","Kingdom Hearts","Ludo","Minecraft","Need for Speed","Overwatch","PUBG","Quiz","Roblox","Scrabble","Tetris","Uno","Valorant","Warzone","Xenoblade Chronicles","Yu-Gi-Oh!","Zelda"],
+  "Company": ["Amazon","Apple","BMW","Canon","Disney","Emirates","Facebook","Google","Honda","Intel","Jumia","Konga","Lego","Microsoft","Netflix","Oracle","PepsiCo","Qatar Airways","Samsung","Toyota","Uber","Visa","Xiaomi","Yamaha","Zoom"],
+  "App": ["Airbnb","Bolt","Canva","Duolingo","Excel","Facebook","Google Maps","Instagram","Jumia","Kuda","LinkedIn","Messenger","Netflix","Opera","Pinterest","Quora","Reddit","Snapchat","TikTok","Uber","VLC","WhatsApp","X","YouTube","Zoom"],
+  "Color": ["Amber","Beige","Black","Coral","Denim","Emerald","Fuchsia","Gold","Hazel","Ivory","Jade","Khaki","Lavender","Magenta","Navy","Orange","Pink","Red","Silver","Teal","Ultramarine","Violet","White","Yellow"],
+  "Instrument": ["Accordion","Banjo","Cello","Drum","Electric guitar","Flute","Guitar","Harp","Ibanez guitar","Keyboard","Lute","Mandolin","Oboe","Piano","Recorder","Saxophone","Tambourine","Ukulele","Violin","Xylophone","Zither"],
+  "Profession": ["Architect","Baker","Chef","Dentist","Engineer","Farmer","Geologist","Historian","Illustrator","Journalist","Lawyer","Musician","Nurse","Optician","Pilot","Researcher","Scientist","Teacher","Umpire","Veterinarian","Writer","YouTuber"],
+  "Household Item": ["Apron","Broom","Cup","Dish","Extension cord","Fork","Grater","Hanger","Iron","Jug","Kettle","Lamp","Mirror","Napkin","Oven","Plate","Quilt","Rug","Spoon","Table","Umbrella","Vacuum","Washing machine","Xylophone","Zipper"],
+  "Nature": ["Air","Beach","Cloud","Desert","Earth","Forest","Glacier","Hill","Island","Jungle","Lake","Mountain","Nature","Ocean","Rain","River","Sand","Tree","Valley","Waterfall","Wind","Yew","Zinnia"],
+  "Superhero": ["Aquaman","Batman","Captain America","Daredevil","Elektra","Flash","Green Lantern","Hulk","Iron Man","Jean Grey","Krypton","Loki","Moon Knight","Nightwing","Odin","Punisher","Quicksilver","Robin","Superman","Thor","Ultron","Vision","Wolverine","X-Men","Yellowjacket","Zatanna"]
+};
+
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
 function makeCode() {
@@ -33,12 +67,26 @@ function makeCode() {
   return code;
 }
 
-function pickLetter() {
-  return LETTERS[Math.floor(Math.random() * LETTERS.length)];
-}
+function pickLetter(category) { return pickLetterForCategory(category); }
 
 function cleanName(name, fallback) {
   return String(name || fallback).trim().slice(0, 25) || fallback;
+}
+
+function normalizeAnswer(value) {
+  return String(value || "")
+    .toLowerCase()
+    .normalize("NFD").replace(/[\\u0300-\\u036f]/g, "")
+    .replace(/[^a-z0-9]/g, "");
+}
+
+function acceptedAnswers(category) {
+  return new Set((ANSWERS[category] || []).map(normalizeAnswer));
+}
+
+function pickLetterForCategory(category) {
+  const letters = [...new Set((ANSWERS[category] || []).map(x => normalizeAnswer(x)[0]).filter(Boolean))];
+  return letters[Math.floor(Math.random() * letters.length)]?.toUpperCase() || "A";
 }
 
 function snapshot(room) {
@@ -191,7 +239,7 @@ io.on("connection", socket => {
 
     room.state = "playing";
     room.round += 1;
-    room.letter = pickLetter();
+    room.letter = pickLetter(room.category);
     room.submissions = [];
     room.submissionCounter = 0;
 
@@ -218,11 +266,24 @@ io.on("connection", socket => {
     const cleanAnswer = String(answer || "").trim().slice(0, 60);
     if (!cleanAnswer) return done?.({ ok: false, error: "Enter an answer." });
 
-    if (!cleanAnswer.toLowerCase().startsWith(room.letter.toLowerCase())) {
-      return done?.({
-        ok: false,
-        error: `Your answer must start with ${room.letter}.`
-      });
+    const normalized = normalizeAnswer(cleanAnswer);
+    const requiredLetter = room.letter.toLowerCase();
+    const validWords = acceptedAnswers(room.category);
+    const startsCorrectly = normalized.startsWith(requiredLetter);
+    const categoryCorrect = validWords.has(normalized);
+
+    // Every submission is checked automatically. Only an answer in the category
+    // answer bank and beginning with the round letter can win.
+    if (!startsCorrectly) {
+      return done?.({ ok: false, error: `Your answer must start with ${room.letter}.` });
+    }
+    if (!categoryCorrect) {
+      return done?.({ ok: false, error: `That answer is not recognized for ${room.category}. Try another one.` });
+    }
+
+    // The first valid answer wins automatically.
+    if (room.state !== "playing") {
+      return done?.({ ok: false, error: "This round already has a winner." });
     }
 
     room.submissionCounter += 1;
@@ -231,53 +292,30 @@ io.on("connection", socket => {
       playerId: socket.id,
       playerName: player.name,
       answer: cleanAnswer,
-      order: room.submissionCounter
+      order: room.submissionCounter,
+      valid: true
     };
 
     room.submissions.push(submission);
-
-    // Host gets the submission immediately, preserving first-answer order.
-    io.to(room.code).emit("submission", submission);
-    broadcast(room);
-
-    done?.({ ok: true, order: submission.order });
-  });
-
-  // HOST marks a submission correct.
-  socket.on("host:correct", ({ submissionId }, done) => {
-    const room = rooms.get(socket.data.room);
-
-    if (!room || room.hostSocket !== socket.id) {
-      return done?.({ ok: false, error: "Host permission required." });
-    }
-
-    if (room.state !== "playing") {
-      return done?.({ ok: false, error: "The round is not active." });
-    }
-
-    const submission = room.submissions.find(s => s.id === submissionId);
-    if (!submission) {
-      return done?.({ ok: false, error: "Submission not found." });
-    }
-
-    const player = room.players.get(submission.playerId);
-    if (!player) return done?.({ ok: false, error: "Player not found." });
 
     stopTimer(room);
     room.state = "result";
     player.score += 1;
 
+    io.to(room.code).emit("submission", submission);
     io.to(room.code).emit("roundResult", {
       winner: player.name,
-      answer: submission.answer,
+      answer: cleanAnswer,
       score: player.score,
-      order: submission.order
+      order: submission.order,
+      automatic: true
     });
 
     broadcast(room);
-    done?.({ ok: true });
+    done?.({ ok: true, order: submission.order, winner: true });
   });
 
+  // Winner detection is automatic. The host no longer needs to mark answers.
   socket.on("host:next", done => {
     const room = rooms.get(socket.data.room);
 
@@ -291,7 +329,7 @@ io.on("connection", socket => {
 
     room.state = "playing";
     room.round += 1;
-    room.letter = pickLetter();
+    room.letter = pickLetter(room.category);
     room.submissions = [];
     room.submissionCounter = 0;
 

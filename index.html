@@ -93,8 +93,8 @@ button{border:0;background:#00d4ff;font-weight:900;cursor:pointer}
 
 <div id="hostPanel" class="hostpanel hide">
 <div class="hostlabel">👑 HOST CONTROL PANEL</div>
-<p class="sub">Submissions appear below in the exact order they were received. Tap <b>CORRECT</b> on the first valid answer.</p>
-<div id="submissions"></div>
+<p class="sub">Answers are checked automatically. The <b>first valid answer</b> wins the round and gets +1 point.</p>
+<div class="note">🤖 AUTO-DETECT ON — valid answers are checked by the game server.</div><div id="submissions"></div>
 <div class="form">
 <button id="nextBtn" class="gold hide" onclick="next()">NEXT ROUND ➜</button>
 <button class="red" onclick="endGame()">END GAME</button>
@@ -173,12 +173,6 @@ function submitAnswer(){
   });
 }
 
-function markCorrect(id){
-  socket.emit("host:correct",{submissionId:id},r=>{
-    if(!r.ok)setMsg("gameMsg",r.error||"Could not mark answer.","bad");
-  });
-}
-
 function next(){socket.emit("host:next");}
 function endGame(){socket.emit("host:end");}
 
@@ -226,10 +220,9 @@ function render(room){
         <div class="submission">
           <div><span class="badge">#${s.order}</span> <b>${escapeHtml(s.playerName)}</b></div>
           <div class="answer">${escapeHtml(s.answer)}</div>
-          <small>First received: ${i===0?"YES":"No"}</small>
-          <button class="gold" onclick="markCorrect('${s.id.replace(/'/g,"\\'")}')">CORRECT ✓</button>
+          <small>✅ Automatically validated • ${i===0?"First valid answer":"Valid answer"}</small>
         </div>`).join("")
-      : "<div class='note'>Waiting for player answers...</div>";
+      : "<div class='note'>Waiting for answers... The first valid answer wins automatically.</div>";
   }
 }
 
