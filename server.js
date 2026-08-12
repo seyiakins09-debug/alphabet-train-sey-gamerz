@@ -1,7 +1,6 @@
 const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
-const path = require("path");
 
 const app = express();
 const server = http.createServer(app);
@@ -17,114 +16,103 @@ const categories = {
   Thing:["anchor","bag","chair","drum","envelope","fan","guitar","hammer","iron","jug","key","lamp","mirror","notebook","phone","radio","shoe","table","umbrella","vase"],
   Brand:["adidas","apple","benz","coca-cola","dell","ebay","facebook","google","honda","intel","jeep","kia","lego","microsoft","nike","oppo","pepsi","samsung","toyota"]
 };
+const letters="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+app.use(express.static("public"));
 
-function code() {
+function makeCode(){
   let c;
-  do c = "SG" + Math.floor(1000 + Math.random() * 9000);
-  while (rooms.has(c));
+  do c="SG"+Math.floor(1000+Math.random()*9000);
+  while(rooms.has(c));
   return c;
 }
-function letter() { return letters[Math.floor(Math.random() * letters.length)]; }
-function publicRoom(room) {
+function snapshot(r){
   return {
-    code: room.code,
-    host: room.host,
-    state: room.state,
-    category: room.category,
-    round: room.round,
-    letter: room.letter,
-    timeLeft: room.timeLeft,
-    players: [...room.players.values()].map(p => ({id:p.id, name:p.name, score:p.score}))
+    code:r.code, state:r.state, hostName:r.hostName, category:r.category,
+    round:r.round, letter:r.letter, time:r.time,
+    players:[...r.players.values()].map(p=>({id:p.id,name:p.name,score:p.score}))
   };
 }
-function broadcast(room) { io.to(room.code).emit("room:update", publicRoom(room)); }
+function sendRoom(r){ io.to(r.code).emit("room",snapshot(r)); }
 
-app.use(express.static(__dirname));
-
-io.on("connection", socket => {
-  socket.on("createRoom", ({name, category}, cb) => {
-    const roomCode = code();
-    const room = {
-      code: roomCode, host: socket.id, category: category || "Place",
-      state:"lobby", round:0, letter:"", timeLeft:45, timer:null,
-      players:new Map()
-    };
-    room.players.set(socket.id, {id:socket.id, name:(name||"Host").trim().slice(0,25), score:0});
-    rooms.set(roomCode, room);
-    socket.join(roomCode);
-    socket.data.room = roomCode;
-    cb({ok:true, room:publicRoom(room)});
-    broadcast(room);
-  });
-
-  socket.on("joinRoom", ({name, roomCode}, cb) => {
-    const room = rooms.get((roomCode||"").trim().toUpperCase());
-    if (!room) return cb({ok:false, error:"Room not found."});
-    if (room.state !== "lobby") return cb({ok:false, error:"This game has already started."});
-    const playerName = (name||"Player").trim().slice(0,25) || "Player";
-    room.players.set(socket.id, {id:socket.id, name:playerName, score:0});
-    socket.join(room.code);
-    socket.data.room = room.code;
-    cb({ok:true, room:publicRoom(room)});
-    broadcast(room);
-  });
-
-  socket.on("startGame", cb => {
-    const room = rooms.get(socket.data.room);
-    if (!room || room.host !== socket.id) return;
-    room.state = "playing"; room.round = 1; room.letter = letter(); room.timeLeft = 45;
-    startTimer(room); broadcast(room); if(cb) cb({ok:true});
-  });
-
-  socket.on("submitAnswer", ({answer}, cb) => {
-    const room = rooms.get(socket.data.room);
-    if (!room || room.state !== "playing") return cb?.({ok:false,error:"Round is not active."});
-    const player = room.players.get(socket.id);
-    if (!player) return;
-    const clean = String(answer||"").trim().toLowerCase();
-    const valid = clean.startsWith(room.letter.toLowerCase()) &&
-      (categories[room.category] || []).includes(clean);
-    if (!valid) return cb?.({ok:false,correct:false,error:"Incorrect answer."});
-    clearInterval(room.timer); room.timer=null; room.state="result";
-    player.score++;
-    io.to(room.code).emit("winner", {name:player.name, answer:clean.toUpperCase(), score:player.score});
-    broadcast(room);
-    cb?.({ok:true,correct:true});
-  });
-
-  socket.on("nextRound", () => {
-    const room = rooms.get(socket.data.room);
-    if (!room || room.host !== socket.id) return;
-    room.state="playing"; room.round++; room.letter=letter(); room.timeLeft=45;
-    startTimer(room); broadcast(room);
-  });
-
-  socket.on("disconnect", () => {
-    const room = rooms.get(socket.data.room);
-    if (!room) return;
-    room.players.delete(socket.id);
-    if (room.host === socket.id) {
-      clearInterval(room.timer);
-      io.to(room.code).emit("closed");
-      rooms.delete(room.code);
-    } else broadcast(room);
-  });
-});
-
-function startTimer(room) {
-  clearInterval(room.timer);
-  room.timer = setInterval(() => {
-    room.timeLeft--;
-    io.to(room.code).emit("timer", room.timeLeft);
-    if (room.timeLeft <= 0) {
-      clearInterval(room.timer); room.timer=null; room.state="result";
-      io.to(room.code).emit("winner", {name:null, answer:null});
-      broadcast(room);
+function startTimer(r){
+  clearInterval(r.timer);
+  r.time=45;
+  r.timer=setInterval(()=>{
+    r.time--;
+    io.to(r.code).emit("time",r.time);
+    if(r.time<=0){
+      clearInterval(r.timer); r.timer=null; r.state="result";
+      io.to(r.code).emit("roundResult",{name:null,answer:null});
+      sendRoom(r);
     }
   },1000);
 }
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log(`Alphabet Train running on port ${PORT}`));
+io.on("connection", socket=>{
+  socket.on("host:create",({name,category},done)=>{
+    const code=makeCode();
+    const r={code,host:socket.id,hostName:(name||"HOST").trim().slice(0,25)||"HOST",
+      category:category||"Place",state:"lobby",round:0,letter:"",time:0,timer:null,players:new Map()};
+    r.players.set(socket.id,{id:socket.id,name:r.hostName,score:0,isHost:true});
+    rooms.set(code,r); socket.join(code); socket.data.code=code; socket.data.isHost=true;
+    done({ok:true,code}); sendRoom(r);
+  });
+
+  socket.on("player:join",({name,code},done)=>{
+    const key=(code||"").trim().toUpperCase();
+    const r=rooms.get(key);
+    if(!r) return done({ok:false,error:"Room not found. Ask the host for the current room code."});
+    if(r.state!=="lobby") return done({ok:false,error:"This game has already started."});
+    const clean=(name||"Player").trim().slice(0,25)||"Player";
+    r.players.set(socket.id,{id:socket.id,name:clean,score:0,isHost:false});
+    socket.join(key); socket.data.code=key; socket.data.isHost=false;
+    done({ok:true}); sendRoom(r);
+  });
+
+  socket.on("host:start",done=>{
+    const r=rooms.get(socket.data.code);
+    if(!r||r.host!==socket.id) return done?.({ok:false});
+    r.state="playing"; r.round=1; r.letter=letters[Math.floor(Math.random()*letters.length)];
+    startTimer(r); sendRoom(r); done?.({ok:true});
+  });
+
+  socket.on("player:answer",({answer},done)=>{
+    const r=rooms.get(socket.data.code);
+    if(!r||r.state!=="playing") return done?.({ok:false,error:"The round is not active."});
+    const p=r.players.get(socket.id);
+    const a=String(answer||"").trim().toLowerCase();
+    const valid=a.startsWith(r.letter.toLowerCase()) && (categories[r.category]||[]).includes(a);
+    if(!valid) return done?.({ok:false,error:"Incorrect answer."});
+    clearInterval(r.timer); r.timer=null; r.state="result"; p.score++;
+    io.to(r.code).emit("roundResult",{name:p.name,answer:a.toUpperCase(),score:p.score});
+    sendRoom(r); done?.({ok:true});
+  });
+
+  socket.on("host:next",done=>{
+    const r=rooms.get(socket.data.code);
+    if(!r||r.host!==socket.id||r.state!=="result") return done?.({ok:false});
+    r.round++; r.letter=letters[Math.floor(Math.random()*letters.length)]; r.state="playing";
+    startTimer(r); sendRoom(r); done?.({ok:true});
+  });
+
+  socket.on("host:end",()=>{
+    const r=rooms.get(socket.data.code);
+    if(!r||r.host!==socket.id) return;
+    clearInterval(r.timer); io.to(r.code).emit("gameEnded"); rooms.delete(r.code);
+  });
+
+  socket.on("disconnect",()=>{
+    const code=socket.data.code, r=rooms.get(code);
+    if(!r) return;
+    if(r.host===socket.id){
+      clearInterval(r.timer); io.to(code).emit("hostLeft"); rooms.delete(code);
+    } else {
+      r.players.delete(socket.id); sendRoom(r);
+    }
+  });
+});
+
+app.get("/health",(req,res)=>res.json({ok:true,rooms:rooms.size}));
+const PORT=process.env.PORT||3000;
+server.listen(PORT,()=>console.log("Alphabet Train V2 running on "+PORT));
